@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Register - Expense Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+</head>
+<body>
+    <div class="auth-page">
+        <form class="auth-card" action="/register" method="POST">
+            <h2>Register</h2>
+
+            {% if error %}
+            <p class="auth-error">{{ error }}</p>
+            {% endif %}
+
+            <input name="username" placeholder="Username" autocomplete="username">
+            <input name="password" placeholder="Password" type="password" autocomplete="new-password">
+            <button>Create Account</button>
+
+            <p>Already have an account? <a href="/login">Login</a></p>
+        </form>
+    </div>
+</body>
+</html>

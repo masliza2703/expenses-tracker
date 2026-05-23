@@ -10,6 +10,11 @@
 <body>
     <div class="wrapper">
         <div class="main">
+            <div class="topbar">
+                <span>Hi, {{ username }}</span>
+                <a href="/logout">Logout</a>
+            </div>
+
             <h2>Expense Tracker</h2>
 
             <form action="/add" method="POST">
