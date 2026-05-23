@@ -1,0 +1,161 @@
+
+body {
+    font-family: Arial, sans-serif;
+    background: #eee6da;
+    margin: 0;
+    color: #222;
+}
+
+.wrapper {
+    display: flex;
+    gap: 20px;
+    max-width: 1180px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.main {
+    flex: 2;
+    background: #f8f0e5;
+    padding: 28px;
+    border: 2px solid #555;
+    border-radius: 8px;
+}
+
+.main h2 {
+    background: #e7b7d6;
+    border-radius: 16px;
+    display: table;
+    font-size: 40px;
+    letter-spacing: 0;
+    margin: 0 auto 24px;
+    padding: 6px 18px;
+    text-transform: uppercase;
+}
+
+.sidebar {
+    flex: 1;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+}
+
+canvas {
+    margin-bottom: 20px;
+}
+
+.tracker-grid {
+    display: grid;
+    gap: 28px 24px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 22px;
+}
+
+.tracker-card {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(255, 255, 255, 0.25);
+    table-layout: fixed;
+}
+
+.tracker-card th,
+.tracker-card td {
+    border: 2px solid #555;
+    padding: 8px 10px;
+    text-align: left;
+}
+
+.tracker-card th {
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+.tracker-card th:first-child {
+    width: 62%;
+}
+
+.tracker-card th:last-child,
+.tracker-card td:last-child {
+    text-align: right;
+}
+
+.tracker-card td {
+    height: 28px;
+    font-size: 14px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.tracker-card td:first-child {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.tracker-card a {
+    color: #555;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.category-total td {
+    background: #f5f5f5;
+    font-weight: bold;
+}
+
+.color-0 th:first-child { background: #ffe683; }
+.color-1 th:first-child { background: #ffb267; }
+.color-2 th:first-child { background: #ffa5a8; }
+.color-3 th:first-child { background: #ef91cf; }
+.color-4 th:first-child { background: #d8b1d5; }
+.color-5 th:first-child { background: #c6b6ed; }
+.color-6 th:first-child { background: #a7cceb; }
+.color-7 th:first-child { background: #aadbd9; }
+
+.tracker-card th:last-child {
+    background: #f7eadc;
+}
+
+.empty-board {
+    border: 2px solid #555;
+    grid-column: 1 / -1;
+    padding: 24px;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.summary {
+    margin-top: 28px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    border: 2px solid #555;
+    padding: 9px 12px;
+    text-transform: uppercase;
+}
+
+.total-row {
+    background: #fff3a6;
+    font-size: 16px;
+    letter-spacing: 3px;
+    margin-top: 0;
+}
+
+@media (max-width: 900px) {
+    .wrapper {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 650px) {
+    .tracker-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .main h2 {
+        font-size: 28px;
+    }
+}

@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Expense Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+</head>
+<body>
+    <div class="wrapper">
+        <div class="main">
+            <h2>Expense Tracker</h2>
+
+            <form action="/add" method="POST">
+                <input name="category" placeholder="Category">
+                <input name="amount" placeholder="Amount" type="number" step="0.01">
+                <input name="note" placeholder="Note">
+                <button>Add</button>
+            </form>
+
+            <hr>
+
+            <div class="tracker-grid">
+                {% for section in category_sections %}
+                <table class="tracker-card color-{{ loop.index0 % 8 }}">
+                    <thead>
+                        <tr>
+                            <th>{{ section.name }}</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for expense in section.expenses %}
+                        <tr>
+                            <td>
+                                <span>{{ expense[3] or expense[4] }}</span>
+                                <a href="/delete/{{ expense[0] }}" title="Delete expense">x</a>
+                            </td>
+                            <td>RM {{ "%.2f"|format(expense[2]) }}</td>
+                        </tr>
+                        {% endfor %}
+                        <tr class="category-total">
+                            <td>Total</td>
+                            <td>RM {{ "%.2f"|format(section.total) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-board">No expenses yet.</div>
+                {% endfor %}
+            </div>
+
+            <div class="summary">
+                <div class="summary-row total-row">
+                    <span>Total</span>
+                    <strong>RM {{ "%.2f"|format(total) }}</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <button id="prevWeek">&lt;</button>
+                <h3 id="weekTitle">Weekly Spending</h3>
+                <button id="nextWeek">&gt;</button>
+            </div>
+            <canvas id="weeklyChart"></canvas>
+
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <button id="prevMonth">&lt;</button>
+                <h3 id="monthTitle">Monthly Spending</h3>
+                <button id="nextMonth">&gt;</button>
+            </div>
+            <canvas id="monthlyChart"></canvas>
+
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <button id="prevCategoryMonth">&lt;</button>
+                <h3 id="categoryTitle">Category</h3>
+                <button id="nextCategoryMonth">&gt;</button>
+            </div>
+            <canvas id="pieChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const categoryLabels = {{ categories | tojson | safe }} || [];
+        const categoryValues = {{ category_values | tojson | safe }} || [];
+        const weeklyPeriods = {{ weekly_periods | tojson | safe }} || [];
+        const weeklyData = {{ weekly_data | tojson | safe }} || {};
+        const monthlyLabels = {{ monthly_labels | tojson | safe }} || [];
+        const monthlyValues = {{ monthly_values | tojson | safe }} || [];
+        const monthlyDailyData = {{ monthly_daily_data | tojson | safe }} || {};
+        const monthlyCategoryData = {{ monthly_category_data | tojson | safe }} || {};
+
+        let selectedWeekKey = weeklyPeriods.length > 0 ? weeklyPeriods[weeklyPeriods.length - 1] : getCurrentWeekKey();
+        let weeklyChart = null;
+
+        function padNumber(value) {
+            return String(value).padStart(2, '0');
+        }
+
+        function formatDateKey(date) {
+            return date.getFullYear() + '-' + padNumber(date.getMonth() + 1) + '-' + padNumber(date.getDate());
+        }
+
+        function getCurrentWeekKey() {
+            const today = new Date();
+            const day = today.getDay() === 0 ? 6 : today.getDay() - 1;
+            today.setDate(today.getDate() - day);
+            return formatDateKey(today);
+        }
+
+        function formatWeekTitle(weekKey) {
+            const weekStart = new Date(weekKey + 'T00:00:00');
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekEnd.getDate() + 6);
+            return weekStart.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) +
+                ' - ' +
+                weekEnd.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+        }
+
+        function moveWeek(amount) {
+            const weekStart = new Date(selectedWeekKey + 'T00:00:00');
+            weekStart.setDate(weekStart.getDate() + amount * 7);
+            selectedWeekKey = formatDateKey(weekStart);
+            renderWeek();
+        }
+
+        function renderWeek() {
+            const weekData = weeklyData[selectedWeekKey] || {
+                title: formatWeekTitle(selectedWeekKey),
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                values: [0, 0, 0, 0, 0, 0, 0]
+            };
+
+            document.getElementById('weekTitle').innerText =
+                'Weekly Spending: ' + weekData.title;
+
+            if (weeklyChart) {
+                weeklyChart.destroy();
+            }
+
+            weeklyChart = new Chart(document.getElementById('weeklyChart'), {
+                type: 'bar',
+                data: {
+                    labels: weekData.labels,
+                    datasets: [{
+                        label: 'Daily Spending',
+                        data: weekData.values
+                    }]
+                }
+            });
+        }
+
+        document.getElementById('prevWeek').onclick = function () {
+            moveWeek(-1);
+        };
+
+        document.getElementById('nextWeek').onclick = function () {
+            moveWeek(1);
+        };
+
+        renderWeek();
+
+        let selectedMonthKey = monthlyLabels.length > 0 ? monthlyLabels[monthlyLabels.length - 1] : getCurrentMonthKey();
+        let monthlyChart = null;
+
+        function getCurrentMonthKey() {
+            const today = new Date();
+            return today.getFullYear() + '-' + padNumber(today.getMonth() + 1);
+        }
+
+        function moveMonth(amount) {
+            const selectedMonth = new Date(selectedMonthKey + '-01T00:00:00');
+            selectedMonth.setMonth(selectedMonth.getMonth() + amount);
+            selectedMonthKey = selectedMonth.getFullYear() + '-' + padNumber(selectedMonth.getMonth() + 1);
+            renderMonth();
+        }
+
+        function renderMonth() {
+            const dailyData = monthlyDailyData[selectedMonthKey] || {
+                labels: [],
+                values: []
+            };
+
+            document.getElementById('monthTitle').innerText =
+                'Monthly Spending: ' + selectedMonthKey;
+
+            if (monthlyChart) {
+                monthlyChart.destroy();
+            }
+
+            monthlyChart = new Chart(document.getElementById('monthlyChart'), {
+                type: 'line',
+                data: {
+                    labels: dailyData.labels,
+                    datasets: [{
+                        label: 'Daily Spending',
+                        data: dailyData.values,
+                        borderColor: '#3ba3e3',
+                        backgroundColor: 'rgba(59, 163, 227, 0.18)',
+                        fill: true,
+                        tension: 0.35
+                    }]
+                }
+            });
+        }
+
+        document.getElementById('prevMonth').onclick = function () {
+            moveMonth(-1);
+        };
+
+        document.getElementById('nextMonth').onclick = function () {
+            moveMonth(1);
+        };
+
+        renderMonth();
+
+        let selectedCategoryMonthKey = monthlyLabels.length > 0 ? monthlyLabels[monthlyLabels.length - 1] : getCurrentMonthKey();
+        let pieChart = null;
+
+        function moveCategoryMonth(amount) {
+            const selectedMonth = new Date(selectedCategoryMonthKey + '-01T00:00:00');
+            selectedMonth.setMonth(selectedMonth.getMonth() + amount);
+            selectedCategoryMonthKey = selectedMonth.getFullYear() + '-' + padNumber(selectedMonth.getMonth() + 1);
+            renderCategoryMonth();
+        }
+
+        function renderCategoryMonth() {
+            const categoryData = monthlyCategoryData[selectedCategoryMonthKey] || {
+                labels: [],
+                values: []
+            };
+
+            document.getElementById('categoryTitle').innerText =
+                'Category: ' + selectedCategoryMonthKey;
+
+            if (pieChart) {
+                pieChart.destroy();
+            }
+
+            if (categoryData.labels.length === 0 || categoryData.values.length === 0) {
+                return;
+            }
+
+            pieChart = new Chart(document.getElementById('pieChart'), {
+                type: 'pie',
+                data: {
+                    labels: categoryData.labels,
+                    datasets: [{
+                        data: categoryData.values
+                    }]
+                }
+            });
+        }
+
+        document.getElementById('prevCategoryMonth').onclick = function () {
+            moveCategoryMonth(-1);
+        };
+
+        document.getElementById('nextCategoryMonth').onclick = function () {
+            moveCategoryMonth(1);
+        };
+
+        renderCategoryMonth();
+    </script>
+</body>
+</html>

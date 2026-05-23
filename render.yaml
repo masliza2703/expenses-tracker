@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: expenses-tracker
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: DATABASE_PATH
+        value: expenses.db
